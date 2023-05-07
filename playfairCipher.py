@@ -1,4 +1,12 @@
+import os
 import string
+
+
+def clear_screen():
+    if os.name == "nt":
+        os.system("cls")
+    else:
+        os.system("clear")
 
 
 def getMatrix(key):
@@ -21,15 +29,25 @@ def getMatrix(key):
             # print("The letter " + letter + " is not in the alphabet")
             continue
 
-    if "I" and "J" in alphabet:
-        alphabet.remove("J")
+    if "I" in alphabet and "J" in alphabet:
         alphabet[alphabet.index("I")] = alphabet[alphabet.index("I")].replace(
             "I", "I/J"
         )
 
     # Add the letters in the key to the front of the alphabet
     for letter in reversed(letters):
+        if letter == "I":
+            letter = letter.replace("I", "I/J")
+        if letter == "J":
+            letter = letter.replace("J", "I/J")
         alphabet.insert(0, letter)
+
+    if "I" in alphabet:
+        alphabet.remove("I")
+
+    if "J" in alphabet:
+        alphabet.remove("J")
+
     # Create a matrix
     matrix = []
     # Fill the matrix with the letters in the alphabet
@@ -39,6 +57,17 @@ def getMatrix(key):
 
 
 def getDigraphs(message):
+    for i in range(0, len(message), 2):
+        if message[i] == "I" and message[i + 1] == "J":
+            message = message[:i] + "IX" + message[i + 1 :]
+        if message[i] == "J" and message[i + 1] == "I":
+            message = message[:i] + "JX" + message[i + 1 :]
+        if message[i] == message[i + 1]:
+            message = message[: i + 1] + "X" + message[i + 1 :]
+
+    if len(message) % 2 != 0:
+        message += "X"
+
     digraphs = []
     for i in range(0, len(message), 2):
         digraphs.append(message[i : i + 2])
@@ -46,6 +75,7 @@ def getDigraphs(message):
 
 
 def printMatrix(matrix):
+    print("\n\nMatrix\n\n")
     for i in range(0, 5):
         print(
             matrix[i]
@@ -55,6 +85,7 @@ def printMatrix(matrix):
             .replace("[", "")
             .replace("]", "")
         )
+    print("\n")
 
 
 def getLetterPosition(matrix, letter):
@@ -66,59 +97,52 @@ def getLetterPosition(matrix, letter):
 
 
 def encrypt(message, key):
+    print("\nEncrypting")
+    message = message.replace(" ", "")
     message = message.upper()
     matrix = getMatrix(key)
 
-    if len(message) % 2 != 0:
-        message += "X"
-
     digraphs = getDigraphs(message)
-    printMatrix(matrix)
-    print(digraphs)
 
-    encryptMessage1 = ""
-    encryptMessage2 = ""
+    printMatrix(matrix)
+    print("Digraphs\n\n", digraphs, "\n\n")
+
+    encryptMessage = ""
 
     for digraph in digraphs:
         pos1 = getLetterPosition(matrix, digraph[0])
         pos2 = getLetterPosition(matrix, digraph[1])
         if len(pos1) == 2 and len(pos2) == 2:
             if pos1[0] == pos2[0]:
-                print("Same row")
-                print(
-                    matrix[pos1[0]][(pos1[1] + 1) % 5]
-                    + matrix[pos2[0]][(pos2[1] + 1) % 5]
-                )
-                encryptMessage1 += (
+                # print("Same row")
+                # print(
+                #     matrix[pos1[0]][(pos1[1] + 1) % 5]
+                #     + matrix[pos2[0]][(pos2[1] + 1) % 5]
+                # )
+                encryptMessage += (
                     matrix[pos1[0]][(pos1[1] + 1) % 5]
                     + matrix[pos2[0]][(pos2[1] + 1) % 5]
                 )
             elif pos1[1] == pos2[1]:
-                print("Same column")
-                print(
-                    matrix[(pos1[0] + 1) % 5][pos1[1]]
-                    + matrix[(pos2[0] + 1) % 5][pos2[1]]
-                )
-                encryptMessage1 += (
+                # print("Same column")
+                # print(
+                #     matrix[(pos1[0] + 1) % 5][pos1[1]]
+                #     + matrix[(pos2[0] + 1) % 5][pos2[1]]
+                # )
+                encryptMessage += (
                     matrix[(pos1[0] + 1) % 5][pos1[1]]
                     + matrix[(pos2[0] + 1) % 5][pos2[1]]
                 )
             else:
-                print("Different row and column")
-                print(matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]])
-                encryptMessage1 += matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]]
+                # print("Different row and column")
+                # print(matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]])
+                encryptMessage += matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]]
 
-    encryptMessage2 = encryptMessage1
-
-    if "I/J" in encryptMessage1:
-        encryptMessage1 = encryptMessage1.replace("I/J", "I")
-        encryptMessage2 = encryptMessage2.replace("I/J", "J")
-
-    print(encryptMessage1)
-    print(encryptMessage2)
+    return encryptMessage
 
 
 def decrypt(message, key):
+    print("\nDecrypting")
     message = message.upper()
     matrix = getMatrix(key)
 
@@ -127,50 +151,74 @@ def decrypt(message, key):
 
     digraphs = getDigraphs(message)
     printMatrix(matrix)
-    print(digraphs)
+    print("\n\nDigraphs\n\n", digraphs, "\n\n")
 
-    decryptMessage1 = ""
-    decryptMessage2 = ""
+    decryptMessage = ""
 
     for digraph in digraphs:
         pos1 = getLetterPosition(matrix, digraph[0])
         pos2 = getLetterPosition(matrix, digraph[1])
         if len(pos1) == 2 and len(pos2) == 2:
             if pos1[0] == pos2[0]:
-                print("Same row")
-                print(
-                    matrix[pos1[0]][(pos1[1] - 1) % 5]
-                    + matrix[pos2[0]][(pos2[1] - 1) % 5]
-                )
-                decryptMessage1 += (
+                # print("Same row")
+                # print(
+                #     matrix[pos1[0]][(pos1[1] - 1) % 5]
+                #     + matrix[pos2[0]][(pos2[1] - 1) % 5]
+                # )
+                decryptMessage += (
                     matrix[pos1[0]][(pos1[1] - 1) % 5]
                     + matrix[pos2[0]][(pos2[1] - 1) % 5]
                 )
             elif pos1[1] == pos2[1]:
-                print("Same column")
-                print(
-                    matrix[(pos1[0] - 1) % 5][pos1[1]]
-                    + matrix[(pos2[0] - 1) % 5][pos2[1]]
-                )
-                decryptMessage1 += (
+                # print("Same column")
+                # print(
+                #     matrix[(pos1[0] - 1) % 5][pos1[1]]
+                #     + matrix[(pos2[0] - 1) % 5][pos2[1]]
+                # )
+                decryptMessage += (
                     matrix[(pos1[0] - 1) % 5][pos1[1]]
                     + matrix[(pos2[0] - 1) % 5][pos2[1]]
                 )
             else:
-                print("Different row and column")
-                print(matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]])
-                decryptMessage1 += matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]]
+                # print("Different row and column")
+                # print(matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]])
+                decryptMessage += matrix[pos1[0]][pos2[1]] + matrix[pos2[0]][pos1[1]]
 
-    decryptMessage2 = decryptMessage1
-
-    if "I/J" in decryptMessage1:
-        decryptMessage1 = decryptMessage1.replace("I/J", "I")
-        decryptMessage2 = decryptMessage2.replace("I/J", "J")
-
-    print("d1", decryptMessage1)
-    print("d2", decryptMessage2)
+    print("Match: ", decryptMessage)
 
 
-encrypt("Have His Carcase", "monarchy")
-decrypt("BOUFRMBMLI", "monarchy")
-decrypt("BOUFRMBMLJ", "monarchy")
+def menu():
+    clear_screen()
+    print("\n\n**************Welcome to Playfair Cipher**************\n\n")
+
+    while True:
+        print("**************Menu**************\n\n")
+        print("Select an option\n\n")
+        print("1. Encode")
+        print("2. Decode")
+        print("3. Exit")
+        opc = input("\n\nEnter the option\t")
+        while not opc.isdigit():
+            print("Invalid selection. Please choose a valid option.")
+            opc = input("\n\nEnter the option\t")
+        opc = int(opc)
+        if opc == 1:
+            message = input("\n\nEnter the message to encode: \t")
+            key = input("\n\nEnter the key: \t")
+            print("\n\nThe encode message is: ", encrypt(message, key), "\n\n")
+            input("Press Enter to continue...")
+        elif opc == 2:
+            message = input("\n\nEnter the message to decode: \t")
+            key = input("\n\nEnter the key: \t")
+            print("\n\nThe decode message is: ", decrypt(message, key), "\n\n")
+            input("Press Enter to continue...")
+        elif opc == 3:
+            print("Good Bye...")
+            break
+        else:
+            clear_screen()
+            print("Invalid selection. Please choose a valid option.")
+            input("Press Enter to continue...")
+
+
+menu()
